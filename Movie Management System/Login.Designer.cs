@@ -33,18 +33,21 @@
             // 
             // textBox1
             // 
-            this.textBox1.Location = new System.Drawing.Point(221, 191);
+            this.textBox1.Location = new System.Drawing.Point(379, 298);
+            this.textBox1.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(292, 24);
+            this.textBox1.Size = new System.Drawing.Size(498, 31);
             this.textBox1.TabIndex = 0;
+            this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
             // 
             // Login
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 16F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(23)))), ((int)(((byte)(42)))));
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(1371, 703);
             this.Controls.Add(this.textBox1);
+            this.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
             this.Name = "Login";
             this.Text = "Login";
             this.ResumeLayout(false);
