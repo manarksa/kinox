@@ -864,5 +864,10 @@ namespace Movie_Management_System
         private void lblAction_Click(object sender, EventArgs e)
         {
         }
+
+        private void panelBody_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
     }
 }
