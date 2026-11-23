@@ -104,6 +104,27 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="Posters\darkknight.jpg" />
+    <Content Include="Posters\DeadPoetsSociety.jpg" />
+    <Content Include="Posters\FindingNemo.jpg" />
+    <Content Include="Posters\FreeGuy.jpg" />
+    <Content Include="Posters\gladiator.jpg" />
+    <Content Include="Posters\GoodWillHunting.jpg" />
+    <Content Include="Posters\HomeAlone.jpg" />
+    <Content Include="Posters\InsideOut.jpg" />
+    <Content Include="Posters\johnwick.jpg" />
+    <Content Include="Posters\madmax.jpg" />
+    <Content Include="Posters\mission.jpg" />
+    <Content Include="Posters\Moana.jpg" />
+    <Content Include="Posters\NightattheMuseum.jpg" />
+    <Content Include="Posters\Paddington.jpg" />
+    <Content Include="Posters\Ratatouille.jpg" />
+    <Content Include="Posters\TheGreenMile.jpg" />
+    <Content Include="Posters\ThePursuitofHappyness.jpg" />
+    <Content Include="Posters\ToyStory.jpg" />
+    <Content Include="Posters\Wonder.jpg" />
+    <Content Include="Posters\Zootopia.jpg" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
