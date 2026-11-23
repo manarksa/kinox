@@ -83,5 +83,23 @@ namespace Movie_Management_System
 
             UpdateWatchlistButton();
         }
+
+        private void btnTrailer_Click(object sender, EventArgs e)
+        {
+      
+            string url = !string.IsNullOrWhiteSpace(movie.TrailerUrl)
+                ? movie.TrailerUrl
+                : "https://www.youtube.com/results?search_query=" +
+                  Uri.EscapeDataString(movie.Title + " " + movie.Year.Trim() + " official trailer");
+
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            });
         }
-}
+    }
+    }
+    
+    
+

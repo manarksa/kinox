@@ -14,5 +14,6 @@ namespace Movie_Management_System
         public string Cast;
         public string Poster;
         public string Category;
+        public string TrailerUrl {get; set;}
     }
 }

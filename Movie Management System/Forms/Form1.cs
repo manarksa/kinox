@@ -341,7 +341,7 @@ namespace Movie_Management_System
         //  (jpg / jpeg / png / bmp / gif). لو كتبت الاسم بدون امتداد
         //  البرنامج يدور عليه تلقائياً.
         // =====================================================
-        private static Movie CreateMovie(string title, string year, string story, string cast, string poster)
+        private static Movie CreateMovie(string title, string year, string story, string cast, string poster , string trailer = "")
         {
             return new Movie
             {
@@ -349,7 +349,8 @@ namespace Movie_Management_System
                 Year = year,
                 Story = story,
                 Cast = cast,
-                Poster = poster
+                Poster = poster,
+                TrailerUrl = trailer
             };
         }
 
@@ -357,7 +358,7 @@ namespace Movie_Management_System
         {
             return new List<Movie>
             {
-                CreateMovie("Mad Max: Fury Road", "2015", "A chase across the desert to escape a tyrant.", "Tom Hardy, Charlize Theron", "madmax.jpg"),
+                CreateMovie("Mad Max: Fury Road", "2015", "A chase across the desert to escape a tyrant.", "Tom Hardy, Charlize Theron", "madmax.jpg","https://youtu.be/hEJnMQG9ev8?si=9lRoL4PlWk303ZBH"),
                 CreateMovie("John Wick", "2014", "A retired hitman returns for revenge.", "Keanu Reeves", "johnwick.jpg"),
                 CreateMovie("Mission: Impossible - Fallout", " 2018", "Ethan Hunt and his team race against time after a mission goes wrong.", "Tom Cruise, Henry Cavill", "mission.jpg"),
                 CreateMovie("The Dark Knight", "2008", "Batman faces the Joker in Gotham City.", "Christian Bale, Heath Ledger", "darkknight.jpg"),

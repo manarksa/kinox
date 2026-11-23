@@ -38,6 +38,7 @@
             this.lblStory = new System.Windows.Forms.Label();
             this.btnClose = new System.Windows.Forms.Button();
             this.btnWatchlist = new System.Windows.Forms.Button();
+            this.btnTrailer = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.picPoster)).BeginInit();
             this.SuspendLayout();
             // 
@@ -66,7 +67,7 @@
             this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 25.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblTitle.Location = new System.Drawing.Point(320, 60);
             this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(151, 60);
+            this.lblTitle.Size = new System.Drawing.Size(147, 59);
             this.lblTitle.TabIndex = 2;
             this.lblTitle.Text = "label1";
             // 
@@ -145,12 +146,27 @@
             this.btnWatchlist.UseVisualStyleBackColor = true;
             this.btnWatchlist.Click += new System.EventHandler(this.btnWatchlist_Click_1);
             // 
+            // btnTrailer
+            // 
+            this.btnTrailer.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(200)))), ((int)(((byte)(235)))));
+            this.btnTrailer.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(200)))), ((int)(((byte)(235)))));
+            this.btnTrailer.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnTrailer.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(10)))), ((int)(((byte)(24)))), ((int)(((byte)(56)))));
+            this.btnTrailer.Location = new System.Drawing.Point(97, 426);
+            this.btnTrailer.Name = "btnTrailer";
+            this.btnTrailer.Size = new System.Drawing.Size(97, 26);
+            this.btnTrailer.TabIndex = 10;
+            this.btnTrailer.Text = "TRAILER";
+            this.btnTrailer.UseVisualStyleBackColor = false;
+            this.btnTrailer.Click += new System.EventHandler(this.btnTrailer_Click);
+            // 
             // MovieDetailsForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(10)))), ((int)(((byte)(24)))), ((int)(((byte)(56)))));
             this.ClientSize = new System.Drawing.Size(882, 473);
+            this.Controls.Add(this.btnTrailer);
             this.Controls.Add(this.btnWatchlist);
             this.Controls.Add(this.btnClose);
             this.Controls.Add(this.lblStory);
@@ -186,5 +202,6 @@
         private System.Windows.Forms.Label lblStory;
         private System.Windows.Forms.Button btnClose;
         private System.Windows.Forms.Button btnWatchlist;
+        private System.Windows.Forms.Button btnTrailer;
     }
 }
