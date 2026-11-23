@@ -111,6 +111,9 @@
     <Content Include="Posters\FreeGuy.jpg" />
     <Content Include="Posters\gladiator.jpg" />
     <Content Include="Posters\GoodWillHunting.jpg" />
+    <Content Include="Posters\hero.jpeg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Posters\HomeAlone.jpg" />
     <Content Include="Posters\InsideOut.jpg" />
     <Content Include="Posters\johnwick.jpg" />

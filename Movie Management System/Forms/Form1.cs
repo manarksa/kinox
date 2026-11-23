@@ -44,6 +44,11 @@ namespace Movie_Management_System
         private Timer slideTimer;
         private bool sideOpen = false;
         private const int SideWidth = 270;
+        Panel panelFooter;
+        Label lblAbout;
+        Label lblContact;
+        Label lblPrivacy;
+        Label lblCopy;
 
         public Form1()
         {
@@ -52,6 +57,8 @@ namespace Movie_Management_System
             Directory.CreateDirectory(PostersFolder);
 
             BuildLayout();
+            BuildHero();
+            MakeFooter();
             BuildMenuButton();      // يخفي أزرار الهيدر القديمة ويربط اللوقو بالرئيسية
             BuildSidePanel();
             LoadMovies();
@@ -85,14 +92,111 @@ namespace Movie_Management_System
             panelBody.Controls.Add(scrollHost);
             scrollHost.BringToFront();
 
-            scrollHost.Resize += (s, e) => CenterContent();
+            scrollHost.Resize += (s, e) =>
+            {
+                CenterContent();
+                if (hero != null)
+                    hero.Width = scrollHost.ClientSize.Width;
+            };
         }
 
+
+        //////////////////////////////////// 
+            ///هذا الهيدر او بدايه الموقع///
+            ////////////////////////////////////  
+        private Panel hero; // بدل PictureBox يعطي تحكم أفضل بالشفافية والـ Controls
+
+        private void BuildHero()
+        {
+            hero = new Panel();
+            hero.Location = new Point(0, 0);
+            hero.Size = new Size(scrollHost.ClientSize.Width, 320);
+            hero.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            hero.BackColor = Color.FromArgb(5, 12, 35);
+            hero.BackgroundImageLayout = ImageLayout.Stretch;
+
+            string path = FindPosterFile("hero");
+            if (path != null)
+            {
+                using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+                {
+                    hero.BackgroundImage = new Bitmap(Image.FromStream(fs));
+                }
+            }
+
+            // طبقة شفافة داكنة فوق الصورة لزيادة وضوح النص (غيّر 140 حسب درجة الشفافية المطلوبة من 0 إلى 255)
+            Panel overlay = new Panel();
+            overlay.Location = new Point(0, 0);
+            overlay.Size = hero.Size;
+            overlay.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            overlay.BackColor = Color.FromArgb(200, 5, 12, 35);
+
+            Label title = new Label();
+            title.Text = "Movie Management System";
+            title.Font = new Font("Segoe UI", 30F, FontStyle.Bold);
+            title.ForeColor = Color.White;
+            title.BackColor = Color.Transparent;
+            title.AutoSize = true;
+            title.Location = new Point(50, 40);
+
+            Label sub = new Label();
+            sub.Text = "Find your next movie and watch its trailer";
+            sub.Font = new Font("Segoe UI", 13F);
+            sub.ForeColor = Color.FromArgb(0, 200, 240);
+            sub.BackColor = Color.Transparent;
+            sub.AutoSize = true;
+            sub.Location = new Point(55, 100);
+
+            Button btnBrowse = new Button();
+            btnBrowse.Text = "Browse Movies";
+            btnBrowse.Size = new Size(150, 42);
+            btnBrowse.Location = new Point(55, 150);
+            btnBrowse.FlatStyle = FlatStyle.Flat;
+            btnBrowse.FlatAppearance.BorderSize = 0;
+            btnBrowse.BackColor = Color.FromArgb(0, 200, 240);
+            btnBrowse.ForeColor = Color.Black;
+            btnBrowse.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+            btnBrowse.Cursor = Cursors.Hand;
+            btnBrowse.Click += (s, e) =>
+            {
+                ShowAll();
+                scrollHost.AutoScrollPosition = new Point(0, hero.Height);
+            };
+
+            Button btnWatch = new Button();
+            btnWatch.Text = "My Watchlist";
+            btnWatch.Size = new Size(150, 42);
+            btnWatch.Location = new Point(220, 150);
+            btnWatch.FlatStyle = FlatStyle.Flat;
+            btnWatch.FlatAppearance.BorderColor = Color.FromArgb(0, 200, 240);
+            btnWatch.BackColor = Color.FromArgb(5, 12, 35);
+            btnWatch.ForeColor = Color.White;
+            btnWatch.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+            btnWatch.Cursor = Cursors.Hand;
+            btnWatch.Click += (s, e) =>
+            {
+                btnWatchlistTab_Click(s, e);
+                scrollHost.AutoScrollPosition = new Point(0, hero.Height);
+            };
+
+            overlay.Controls.Add(title);
+            overlay.Controls.Add(sub);
+            overlay.Controls.Add(btnBrowse);
+            overlay.Controls.Add(btnWatch);
+
+            hero.Controls.Add(overlay);
+            scrollHost.Controls.Add(hero);
+            hero.Width = scrollHost.ClientSize.Width;
+            overlay.Dock= DockStyle.Fill;
+            content.Top = hero.Height;
+        }
         private void CenterContent()
         {
             int left = (scrollHost.ClientSize.Width - content.Width) / 2;
             if (left < 10) left = 10;
             content.Left = left;
+            if (panelFooter != null)
+                panelFooter.Width = scrollHost.ClientSize.Width;
         }
 
         // =====================================================
@@ -486,8 +590,10 @@ namespace Movie_Management_System
             }
 
             content.Height = y;
-            scrollHost.AutoScrollMinSize = new Size(0, y);
             scrollHost.AutoScrollPosition = new Point(0, 0);
+            panelFooter.Top = y + 20;
+            panelFooter.Width = scrollHost.ClientSize.Width;
+            scrollHost.AutoScrollMinSize = new Size(0, y + 20 + panelFooter.Height);
             CenterContent();
             scrollHost.ResumeLayout();
         }
@@ -684,6 +790,70 @@ namespace Movie_Management_System
         private void button1_Click(object sender, EventArgs e)
         {
             ShowAll();
+        }
+
+        private void MakeFooter()
+        {
+            panelFooter = new Panel();
+            panelFooter.Height = 70;
+            panelFooter.BackColor = Color.FromArgb(6, 14, 34);
+
+            lblAbout = new Label();
+            lblAbout.Text = "About Us";
+            lblAbout.ForeColor = Color.FromArgb(0, 200, 240);
+            lblAbout.Font = new Font("Segoe UI", 11);
+            lblAbout.AutoSize = true;
+            lblAbout.Cursor = Cursors.Hand;
+            lblAbout.Location = new Point(300, 12);
+            lblAbout.Click += lblAbout_Click;
+
+            lblContact = new Label();
+            lblContact.Text = "Contact Us";
+            lblContact.ForeColor = Color.FromArgb(0, 200, 240);
+            lblContact.Font = new Font("Segoe UI", 11);
+            lblContact.AutoSize = true;
+            lblContact.Cursor = Cursors.Hand;
+            lblContact.Location = new Point(420, 12);
+            lblContact.Click += lblContact_Click;
+
+            lblPrivacy = new Label();
+            lblPrivacy.Text = "Privacy Policy";
+            lblPrivacy.ForeColor = Color.FromArgb(0, 200, 240);
+            lblPrivacy.Font = new Font("Segoe UI", 11);
+            lblPrivacy.AutoSize = true;
+            lblPrivacy.Cursor = Cursors.Hand;
+            lblPrivacy.Location = new Point(550, 12);
+            lblPrivacy.Click += lblPrivacy_Click;
+
+            lblCopy = new Label();
+            lblCopy.Text = "© 2026 Movie Management System";
+            lblCopy.ForeColor = Color.Gray;
+            lblCopy.Font = new Font("Segoe UI", 9);
+            lblCopy.AutoSize = true;
+            lblCopy.Location = new Point(300, 42);
+
+            panelFooter.Controls.Add(lblAbout);
+            panelFooter.Controls.Add(lblContact);
+            panelFooter.Controls.Add(lblPrivacy);
+            panelFooter.Controls.Add(lblCopy);
+
+            panelFooter.Left = 0;
+            scrollHost.Controls.Add(panelFooter);
+        }
+
+        private void lblAbout_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("This system helps you browse movies.", "About Us");
+        }
+
+        private void lblContact_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Email: lmmovieapp@gmail.com", "Contact Us");
+        }
+
+        private void lblPrivacy_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Coming soon.", "Privacy Policy");
         }
 
         // فاضيين بس مربوطين في Form1.Designer.cs فلازم يبقون
