@@ -2,11 +2,16 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.SqlClient;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.Remoting.Contexts;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Collections.Specialized.BitVector32;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Movie_Management_System
 {
@@ -21,5 +26,59 @@ namespace Movie_Management_System
         {
 
         }
+
+        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            this.Hide();
+            SignUp signup = new SignUp();
+            signup.ShowDialog();
+            this.Show();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+
+            string conStr = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=""C:\Users\Nada\OneDrive\Desktop\MovieApp\Movie Management System\Movie Management System\MovieDB.mdf"";Integrated Security=True;Connect Timeout=30";
+
+            using (SqlConnection con = new SqlConnection(conStr))
+            {
+                con.Open();
+                SqlCommand cmd = new SqlCommand(
+                    "SELECT Id , Name FROM Users WHERE Email=@e AND Password=@p", con);
+                cmd.Parameters.AddWithValue("@e", textBox1.Text);
+                cmd.Parameters.AddWithValue("@p", textBox2.Text);
+                using (SqlDataReader dr = cmd.ExecuteReader())
+                {
+                    if (dr.Read())
+                    {
+                        Session.UserId = (int)dr["Id"];
+                        Session.UserName = dr["Name"].ToString();
+
+                        Form1 main = new Form1();
+                        main.Show();
+                        this.Hide();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Invalid email or password");
+                    }
+                }
+            }
+        }
+        public static string Hash(string text)
+        {
+            using (SHA256 sha = SHA256.Create())
+            {
+                byte[] b = sha.ComputeHash(Encoding.UTF8.GetBytes(text));
+                return BitConverter.ToString(b).Replace("-", "");
+            }
+        }
+                public static class Session
+        {
+            public static int UserId;
+            public static string UserName = "";
+        }
     }
 }
+    
+

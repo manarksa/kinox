@@ -1,0 +1,1 @@
+﻿ALTER TABLE Movies ADD TrailerUrl NVARCHAR(300);

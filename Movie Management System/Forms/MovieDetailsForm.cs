@@ -2,17 +2,21 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.SqlClient;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.IO;
+using static Movie_Management_System.Login;
+
 namespace Movie_Management_System
 {
     public partial class MovieDetailsForm : Form
     {
-        public static List<Movie> Watchlist = new List<Movie>();
+        private const string ConStr = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=""C:\Users\Nada\OneDrive\Desktop\MovieApp\Movie Management System\Movie Management System\MovieDB.mdf"";Integrated Security=True;Connect Timeout=30";
+
         private Movie movie;
 
         public MovieDetailsForm(Movie m)
@@ -32,13 +36,26 @@ namespace Movie_Management_System
 
             UpdateWatchlistButton();
         }
+
+        // هل الفيلم موجود بواتش ليست اليوزر الحالي؟ (من الداتابيس)
+        public static bool IsInWatchlist(int movieId)
+        {
+            using (SqlConnection con = new SqlConnection(ConStr))
+            {
+                con.Open();
+                SqlCommand cmd = new SqlCommand(
+                    "SELECT COUNT(*) FROM Watchlist WHERE UserId=@u AND MovieId=@m", con);
+                cmd.Parameters.AddWithValue("@u", Session.UserId);
+                cmd.Parameters.AddWithValue("@m", movieId);
+                return (int)cmd.ExecuteScalar() > 0;
+            }
+        }
+
         private void UpdateWatchlistButton()
         {
-            bool isExist = MovieDetailsForm.Watchlist.Any(m => m.Title == movie.Title);
-
-            if (isExist)
+            if (IsInWatchlist(movie.Id))
             {
-                btnWatchlist.Text = "Already in Watchlist";
+                btnWatchlist.Text = "Remove from Watchlist";
                 btnWatchlist.BackColor = Color.Gray;
             }
             else
@@ -48,14 +65,41 @@ namespace Movie_Management_System
             }
         }
 
+        private void ToggleWatchlist()
+        {
+            if (Session.UserId == 0)
+            {
+                MessageBox.Show("Please log in first.");
+                return;
+            }
+
+            bool exists = IsInWatchlist(movie.Id);
+
+            using (SqlConnection con = new SqlConnection(ConStr))
+            {
+                con.Open();
+                SqlCommand cmd;
+                if (exists)
+                    cmd = new SqlCommand("DELETE FROM Watchlist WHERE UserId=@u AND MovieId=@m", con);
+                else
+                    cmd = new SqlCommand("INSERT INTO Watchlist (UserId, MovieId) VALUES (@u, @m)", con);
+
+                cmd.Parameters.AddWithValue("@u", Session.UserId);
+                cmd.Parameters.AddWithValue("@m", movie.Id);
+                cmd.ExecuteNonQuery();
+            }
+            UpdateWatchlistButton();
+        }
+
+        // الاثنين مربوطين بالـ Designer، فنخليهم يسوون نفس الشي
         private void btnWatchlist_Click(object sender, EventArgs e)
         {
-            if (Watchlist.Contains(movie))
-                Watchlist.Remove(movie);
-            else
-                Watchlist.Add(movie);
+            ToggleWatchlist();
+        }
 
-            UpdateWatchlistButton();
+        private void btnWatchlist_Click_1(object sender, EventArgs e)
+        {
+            ToggleWatchlist();
         }
 
         private void btnClose_Click(object sender, EventArgs e)
@@ -68,25 +112,8 @@ namespace Movie_Management_System
             Close();
         }
 
-        private void btnWatchlist_Click_1(object sender, EventArgs e)
-        {
-            var existingMovie = MovieDetailsForm.Watchlist.FirstOrDefault(m => m.Title == movie.Title);
-
-            if (existingMovie != null)
-            {
-                MovieDetailsForm.Watchlist.Remove(existingMovie);
-            }
-            else
-            {
-                MovieDetailsForm.Watchlist.Add(movie);
-            }
-
-            UpdateWatchlistButton();
-        }
-
         private void btnTrailer_Click(object sender, EventArgs e)
         {
-      
             string url = !string.IsNullOrWhiteSpace(movie.TrailerUrl)
                 ? movie.TrailerUrl
                 : "https://www.youtube.com/results?search_query=" +
@@ -101,10 +128,6 @@ namespace Movie_Management_System
 
         private void MovieDetailsForm_Load(object sender, EventArgs e)
         {
-
         }
     }
-    }
-    
-    
-
+}

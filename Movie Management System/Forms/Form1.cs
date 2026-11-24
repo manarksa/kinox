@@ -5,6 +5,8 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Text;
 using System.IO;
 using System.Windows.Forms;
+using static Movie_Management_System.Login;
+using System.Data.SqlClient;
 
 namespace Movie_Management_System
 {
@@ -43,6 +45,7 @@ namespace Movie_Management_System
         private FlowLayoutPanel catPanel;   // التصنيفات (تظهر عند الضغط على Movies)
         private Timer slideTimer;
         private bool sideOpen = false;
+        private bool loggingOut = false;
         private const int SideWidth = 270;
         Panel panelFooter;
         Label lblAbout;
@@ -80,7 +83,11 @@ namespace Movie_Management_System
         {
             get { return Path.Combine(Application.StartupPath, "Posters"); }
         }
-
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            base.OnFormClosed(e);
+            if (!loggingOut) Application.Exit();
+        }
         // =====================================================
         //  بناء منطقة العرض (الصور بالسنتر)
         // =====================================================
@@ -252,7 +259,16 @@ namespace Movie_Management_System
                     logo.Click += (s, e) => GoHome();
                 }
             }
-
+            Label lblUser = new Label();
+            lblUser.Text = Session.UserName == "" ? "" : "Hello, " + Session.UserName;
+            lblUser.ForeColor = Color.White;
+            lblUser.BackColor = Color.Transparent;
+            lblUser.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            lblUser.AutoSize = true;
+            lblUser.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            lblUser.Location = new Point(btnMenu.Left - 340 - lblUser.PreferredWidth - 20,
+                                         (panelHeader.Height - lblUser.PreferredHeight) / 2);
+            panelHeader.Controls.Add(lblUser);
             panelHeader.Controls.Add(btnMenu);
             btnMenu.BringToFront();
         }
@@ -417,16 +433,36 @@ namespace Movie_Management_System
             flowMenu.Controls.Add(MakeMenuButton("Profile", 0, (s, e) =>
             {
                 ToggleSidePanel();
-                // TODO: افتح فورم الملف الشخصي عندك مثلاً: new ProfileForm().Show();
-                MessageBox.Show("Profile page coming soon.", "Profile");
+                if (Session.UserId == 0)
+                {
+                    MessageBox.Show("Please log in first.");
+                    return;
+                }
+                new Movie_Management_System.Forms.ProfileForm().ShowDialog();
             }));
 
             // 2) الإعدادات
             flowMenu.Controls.Add(MakeMenuButton("Settings", 0, (s, e) =>
             {
                 ToggleSidePanel();
-                // TODO: افتح فورم الإعدادات عندك مثلاً: new SettingsForm().ShowDialog();
-                MessageBox.Show("Settings page coming soon.", "Settings");
+                if (Session.UserId == 0)
+                {
+                    MessageBox.Show("Please log in first.");
+                    return;
+                }
+
+                Movie_Management_System.Forms.SettingsForm sf = new Movie_Management_System.Forms.SettingsForm();
+                sf.ShowDialog();
+
+                // لو حذف حسابه: نرجّعه لصفحة Login
+                if (sf.AccountDeleted)
+                {
+                    Session.UserId = 0;
+                    Session.UserName = "";
+                    loggingOut = true;
+                    new Login().Show();
+                    this.Close();
+                }
             }));
 
             // 3) Watchlist
@@ -436,11 +472,31 @@ namespace Movie_Management_System
                 btnWatchlistTab_Click(s, e);
             }));
 
-            // 4) تسجيل الدخول
-            flowMenu.Controls.Add(MakeMenuButton("Login", 0, (s, e) =>
+            // 4) تسجيل الدخول / الخروج (زر واحد يتغير حسب الحالة)
+            bool loggedIn = Session.UserId != 0;
+
+            flowMenu.Controls.Add(MakeMenuButton(loggedIn ? "Logout" : "Login", 0, (s, e) =>
             {
                 ToggleSidePanel();
-                btnLogin_Click(s, e);
+
+                if (Session.UserId == 0)
+                {
+                    // مو مسجل دخول: افتحي صفحة Login
+                    btnLogin_Click(s, e);
+                }
+                else
+                {
+                    // مسجل دخول: سجّلي خروج بعد التأكيد
+                    if (MessageBox.Show("Are you sure you want to log out?", "Logout",
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                    {
+                        Session.UserId = 0;
+                        Session.UserName = "";
+                        loggingOut = true;
+                        new Login().Show();
+                        this.Close();
+                    }
+                }
             }));
 
             // 5) الأفلام (قائمة منسدلة بالتصنيفات)
@@ -538,14 +594,43 @@ namespace Movie_Management_System
         private void LoadMovies()
         {
             allSections.Clear();
-            allSections.Add(new KeyValuePair<string, List<Movie>>("Action", GetActionMovies()));
-            allSections.Add(new KeyValuePair<string, List<Movie>>("Comedy", GetComedyMovies()));
-            allSections.Add(new KeyValuePair<string, List<Movie>>("Drama", GetDramaMovies()));
-            allSections.Add(new KeyValuePair<string, List<Movie>>("Animation / Family", GetFamilyMovies()));
 
-            foreach (KeyValuePair<string, List<Movie>> sec in allSections)
-                foreach (Movie m in sec.Value)
-                    m.Category = sec.Key;
+            string conStr = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=""C:\Users\Nada\OneDrive\Desktop\MovieApp\Movie Management System\Movie Management System\MovieDB.mdf"";Integrated Security=True;Connect Timeout=30";
+
+            Dictionary<string, List<Movie>> byCat = new Dictionary<string, List<Movie>>();
+            List<string> order = new List<string>();
+
+            using (SqlConnection con = new SqlConnection(conStr))
+            {
+                con.Open();
+                SqlCommand cmd = new SqlCommand(
+                    "SELECT Id, Title, Category, Year, Story, Cast, Poster, TrailerUrl FROM Movies ORDER BY Id", con);
+                using (SqlDataReader dr = cmd.ExecuteReader())
+                {
+                    while (dr.Read())
+                    {
+                        Movie m = new Movie();
+                        m.Id = (int)dr["Id"];
+                        m.Title = dr["Title"].ToString();
+                        m.Category = dr["Category"].ToString();
+                        m.Year = dr["Year"].ToString();
+                        m.Story = dr["Story"].ToString();
+                        m.Cast = dr["Cast"].ToString();
+                        m.Poster = dr["Poster"].ToString();
+                        m.TrailerUrl = dr["TrailerUrl"].ToString();
+
+                        if (!byCat.ContainsKey(m.Category))
+                        {
+                            byCat[m.Category] = new List<Movie>();
+                            order.Add(m.Category);
+                        }
+                        byCat[m.Category].Add(m);
+                    }
+                }
+            }
+
+            foreach (string cat in order)
+                allSections.Add(new KeyValuePair<string, List<Movie>>(cat, byCat[cat]));
 
             BuildCategoryButtons();
             ShowAll();
@@ -908,8 +993,18 @@ namespace Movie_Management_System
 
         private void btnWatchlistTab_Click(object sender, EventArgs e)
         {
+            List<Movie> mine = new List<Movie>();
+
+            if (Session.UserId != 0)
+            {
+                foreach (KeyValuePair<string, List<Movie>> sec in allSections)
+                    foreach (Movie m in sec.Value)
+                        if (MovieDetailsForm.IsInWatchlist(m.Id))
+                            mine.Add(m);
+            }
+
             List<KeyValuePair<string, List<Movie>>> one = new List<KeyValuePair<string, List<Movie>>>();
-            one.Add(new KeyValuePair<string, List<Movie>>("Watchlist", MovieDetailsForm.Watchlist));
+            one.Add(new KeyValuePair<string, List<Movie>>("Watchlist", mine));
             Render(one, "Your watchlist is empty.");
         }
 

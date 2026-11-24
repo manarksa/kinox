@@ -8,6 +8,7 @@ namespace Movie_Management_System
 {
     public class Movie
     {
+        public int Id;
         public string Title;
         public string Year;
         public string Story;
