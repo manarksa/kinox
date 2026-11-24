@@ -50,6 +50,17 @@ namespace Movie_Management_System
         Label lblPrivacy;
         Label lblCopy;
 
+        // <<< جديد: عناصر الفوتر الإضافية
+        private Label lblBrand, lblBrandDesc, lblLinksTitle, lblContactTitle, lblMail;
+        private Panel footerDivider;
+
+        // <<< جديد: عناصر البحث
+        private Panel searchBox;
+        private TextBox txtSearch;
+        private bool searchHintOn = true;
+        private bool searchSuppress = false;
+        private const string SearchHint = "Search movies, actors, year...";
+
         public Form1()
         {
             InitializeComponent();
@@ -60,6 +71,7 @@ namespace Movie_Management_System
             BuildHero();
             MakeFooter();
             BuildMenuButton();      // يخفي أزرار الهيدر القديمة ويربط اللوقو بالرئيسية
+            BuildSearchBox();       // <<< جديد: صندوق البحث (لازم بعد BuildMenuButton)
             BuildSidePanel();
             LoadMovies();
         }
@@ -102,8 +114,8 @@ namespace Movie_Management_System
 
 
         //////////////////////////////////// 
-            ///هذا الهيدر او بدايه الموقع///
-            ////////////////////////////////////  
+        ///هذا الهيدر او بدايه الموقع///
+        ////////////////////////////////////  
         private Panel hero; // بدل PictureBox يعطي تحكم أفضل بالشفافية والـ Controls
 
         private void BuildHero()
@@ -187,16 +199,17 @@ namespace Movie_Management_System
             hero.Controls.Add(overlay);
             scrollHost.Controls.Add(hero);
             hero.Width = scrollHost.ClientSize.Width;
-            overlay.Dock= DockStyle.Fill;
+            overlay.Dock = DockStyle.Fill;
             content.Top = hero.Height;
         }
+
+        // <<< معدّل: صار يستدعي LayoutFooter بدل تعديل عرض الفوتر فقط
         private void CenterContent()
         {
             int left = (scrollHost.ClientSize.Width - content.Width) / 2;
             if (left < 10) left = 10;
             content.Left = left;
-            if (panelFooter != null)
-                panelFooter.Width = scrollHost.ClientSize.Width;
+            LayoutFooter();
         }
 
         // =====================================================
@@ -242,6 +255,118 @@ namespace Movie_Management_System
 
             panelHeader.Controls.Add(btnMenu);
             btnMenu.BringToFront();
+        }
+
+        // =====================================================
+        //  <<< جديد: صندوق البحث (جنب ☰)
+        // =====================================================
+        private void BuildSearchBox()
+        {
+            searchBox = new Panel();
+            searchBox.Size = new Size(300, 40);
+            searchBox.BackColor = BgItem;
+            searchBox.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            searchBox.Location = new Point(btnMenu.Left - searchBox.Width - 15,
+                                           (panelHeader.Height - searchBox.Height) / 2);
+            searchBox.Paint += (s, e) =>
+            {
+                using (Pen p = new Pen(Accent, 2))
+                    e.Graphics.DrawRectangle(p, 1, 1, searchBox.Width - 3, searchBox.Height - 3);
+            };
+
+            Label icon = new Label();
+            icon.Text = "🔍";
+            icon.Font = new Font("Segoe UI Emoji", 12F);
+            icon.ForeColor = Accent;
+            icon.BackColor = BgItem;
+            icon.AutoSize = true;
+            icon.Location = new Point(8, 8);
+            searchBox.Controls.Add(icon);
+
+            txtSearch = new TextBox();
+            txtSearch.BorderStyle = BorderStyle.None;
+            txtSearch.BackColor = BgItem;
+            txtSearch.Font = new Font("Segoe UI", 12F);
+            txtSearch.Width = 245;
+            txtSearch.Location = new Point(40, 9);
+            SetSearchHint();
+
+            txtSearch.Enter += (s, e) =>
+            {
+                if (searchHintOn)
+                {
+                    searchSuppress = true;
+                    txtSearch.Text = "";
+                    searchSuppress = false;
+                    txtSearch.ForeColor = Color.White;
+                    searchHintOn = false;
+                }
+            };
+            txtSearch.Leave += (s, e) =>
+            {
+                if (txtSearch.Text.Trim() == "") SetSearchHint();
+            };
+            txtSearch.TextChanged += (s, e) =>
+            {
+                if (searchSuppress || searchHintOn) return;
+                RunSearch(txtSearch.Text);
+            };
+            txtSearch.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Escape)
+                {
+                    txtSearch.Text = "";      // يرجّع كل الأفلام
+                    e.SuppressKeyPress = true;
+                }
+            };
+
+            searchBox.Controls.Add(txtSearch);
+            panelHeader.Controls.Add(searchBox);
+            searchBox.BringToFront();
+        }
+
+        private void SetSearchHint()
+        {
+            searchSuppress = true;
+            txtSearch.Text = SearchHint;
+            searchSuppress = false;
+            txtSearch.ForeColor = Color.FromArgb(140, 160, 190);
+            searchHintOn = true;
+        }
+
+        private void RunSearch(string text)
+        {
+            if (sideOpen) ToggleSidePanel();
+
+            string q = text.Trim().ToLowerInvariant();
+            if (q == "")
+            {
+                ShowAll();
+                return;
+            }
+
+            string[] words = q.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            List<Movie> found = new List<Movie>();
+
+            foreach (KeyValuePair<string, List<Movie>> sec in allSections)
+            {
+                foreach (Movie m in sec.Value)
+                {
+                    string hay = (m.Title + " " + m.Year + " " + m.Cast + " " +
+                                  m.Story + " " + m.Category).ToLowerInvariant();
+                    bool all = true;
+                    foreach (string w in words)
+                        if (!hay.Contains(w)) { all = false; break; }
+                    if (all) found.Add(m);
+                }
+            }
+
+            List<KeyValuePair<string, List<Movie>>> res = new List<KeyValuePair<string, List<Movie>>>();
+            res.Add(new KeyValuePair<string, List<Movie>>("Results for \"" + text.Trim() + "\"", found));
+            Render(res, "No movies match your search.");
+
+            // ينزل مباشرة للنتائج تحت الهيرو
+            scrollHost.AutoScrollPosition = new Point(0, hero.Height);
         }
 
         // يرجع للصفحة الرئيسية: كل الأفلام + يقفل القائمة لو مفتوحة
@@ -444,8 +569,9 @@ namespace Movie_Management_System
         //  لإضافة صورة: حط الملف في مجلد Posters واكتب اسمه مع الامتداد
         //  (jpg / jpeg / png / bmp / gif). لو كتبت الاسم بدون امتداد
         //  البرنامج يدور عليه تلقائياً.
+        //  لإضافة مقدمة الفيلم: حط رابط اليوتيوب بآخر السطر بعد اسم الصورة.
         // =====================================================
-        private static Movie CreateMovie(string title, string year, string story, string cast, string poster , string trailer = "")
+        private static Movie CreateMovie(string title, string year, string story, string cast, string poster, string trailer = "")
         {
             return new Movie
             {
@@ -462,11 +588,12 @@ namespace Movie_Management_System
         {
             return new List<Movie>
             {
-                CreateMovie("Mad Max: Fury Road", "2015", "A chase across the desert to escape a tyrant.", "Tom Hardy, Charlize Theron", "madmax.jpg","https://youtu.be/hEJnMQG9ev8?si=9lRoL4PlWk303ZBH"),
-                CreateMovie("John Wick", "2014", "A retired hitman returns for revenge.", "Keanu Reeves", "johnwick.jpg"),
-                CreateMovie("Mission: Impossible - Fallout", " 2018", "Ethan Hunt and his team race against time after a mission goes wrong.", "Tom Cruise, Henry Cavill", "mission.jpg"),
-                CreateMovie("The Dark Knight", "2008", "Batman faces the Joker in Gotham City.", "Christian Bale, Heath Ledger", "darkknight.jpg"),
-                CreateMovie("Gladiator", "2000", "A betrayed general becomes a gladiator.", "Russell Crowe, Joaquin Phoenix", "gladiator.jpg")
+                // <<< معدّل: شلت الرابط من Mad Max (كان غلط) ونقلته لـ Mission
+                CreateMovie("Mad Max: Fury Road", "2015", "A chase across the desert to escape a tyrant.", "Tom Hardy, Charlize Theron", "madmax.jpg","https://youtu.be/hEJnMQG9ev8?si=4FYXSE1f5m3RoxYT"),
+                CreateMovie("John Wick", "2014", "A retired hitman returns for revenge.", "Keanu Reeves", "johnwick.jpg", "https://youtu.be/C0BMx-qxsP4?si=2uth-OpOskqCL3sY"),
+                CreateMovie("Mission: Impossible - Fallout", " 2018", "Ethan Hunt and his team race against time after a mission goes wrong.", "Tom Cruise, Henry Cavill", "mission.jpg", "https://youtu.be/wb49-oV0F78?si=JKUn-W2z05pjU9GM"),
+                CreateMovie("The Dark Knight", "2008", "Batman faces the Joker in Gotham City.", "Christian Bale, Heath Ledger", "darkknight.jpg","https://youtu.be/EXeTwQWrcwY?si=lGbc_KwnDakazdRP"),
+                CreateMovie("Gladiator", "2000", "A betrayed general becomes a gladiator.", "Russell Crowe, Joaquin Phoenix", "gladiator.jpg", "https://youtu.be/P5ieIbInFpg?si=FBUTfZCWRECW6p74")
             };
         }
 
@@ -474,11 +601,11 @@ namespace Movie_Management_System
         {
             return new List<Movie>
             {
-                CreateMovie("Home Alone", "1990", "An eight-year-old troublemaker must protect his house from a pair of burglars.", "Macaulay Culkin, Joe Pesci", "HomeAlone.jpg"),
-                CreateMovie("Night at the Museum", "2006", "A night watchman at a museum discovers that an ancient curse brings the exhibits to life.", "Ben Stiller, Robin Williams", "NightattheMuseum.jpg"),
-                CreateMovie("Paddington 2", "2017", "Paddington tries to get a gift for his aunt’s birthday, but things go hilariously wrong.", "Ben Whishaw, Hugh Grant", "Paddington.jpg"),
-                CreateMovie("Free Guy", "2021", "A bank teller discovers that he is actually a background player in an open-world video game.", "Ryan Reynolds, Jodie Comer", "FreeGuy.jpg"),
-                CreateMovie("Toy Story", "1995", "A cowboy doll is profoundly threatened and jealous when a new spaceman action figure supplants him.", "Tom Hanks, Tim Allen", "ToyStory.jpg")
+                CreateMovie("Home Alone", "1990", "An eight-year-old troublemaker must protect his house from a pair of burglars.", "Macaulay Culkin, Joe Pesci", "HomeAlone.jpg","https://youtu.be/jEDaVHmw7r4?si=HPwzh2fOEW3kJ6mk"),
+                CreateMovie("Night at the Museum", "2006", "A night watchman at a museum discovers that an ancient curse brings the exhibits to life.", "Ben Stiller, Robin Williams", "NightattheMuseum.jpg","https://youtu.be/Ltba1_-tRT4?si=L_IlqeFE0jwmkM5p"),
+                CreateMovie("Paddington 2", "2017", "Paddington tries to get a gift for his aunt’s birthday, but things go hilariously wrong.", "Ben Whishaw, Hugh Grant", "Paddington.jpg","https://youtu.be/sw7RElt-SvE?si=7cCFv5FQOcsT7hrn"),
+                CreateMovie("Free Guy", "2021", "A bank teller discovers that he is actually a background player in an open-world video game.", "Ryan Reynolds, Jodie Comer", "FreeGuy.jpg","https://youtu.be/X2m-08cOAbc?si=QJUvl-aWhPatgdjM"),
+                CreateMovie("Toy Story", "1995", "A cowboy doll is profoundly threatened and jealous when a new spaceman action figure supplants him.", "Tom Hanks, Tim Allen", "ToyStory.jpg","https://youtu.be/h9hsA-LjQtk?si=nIxoM3akTqzU3cAY")
             };
         }
 
@@ -486,11 +613,11 @@ namespace Movie_Management_System
         {
             return new List<Movie>
             {
-                CreateMovie("The Pursuit of Happyness", "2006", "A struggling salesman takes custody of his son as he’s poised to begin a life-changing professional career.", "Will Smith, Jaden Smith", "ThePursuitofHappyness.jpg"),
-                CreateMovie("The Green Mile", "1999", "The lives of guards on Death Row are affected by one of their charges: a black man accused of child murder and rape, yet who has a mysterious gift.", "Tom Hanks, Michael Clarke Duncan", "TheGreenMile.jpg"),
-                CreateMovie("Wonder", "2017", "Based on the New York Times bestseller, this movie tells the incredibly inspiring and heartwarming story of August Pullman.", "Julia Roberts, Jacob Tremblay", "Wonder.jpg"),
-                CreateMovie("Dead Poets Society", "1989", "An English teacher inspires his students to look at poetry with a different perspective of authentic knowledge and extrasolar life.", "Robin Williams, Robert Sean\r\nLeonard", "DeadPoetsSociety.jpg"),
-                CreateMovie("Good Will Hunting", "1997", "Will Hunting, a janitor at M.I.T., has a gift for mathematics, but needs help from a psychologist to find direction in his life.", "Robin Williams, Matt Damon", "GoodWillHunting.jpg")
+                CreateMovie("The Pursuit of Happyness", "2006", "A struggling salesman takes custody of his son as he’s poised to begin a life-changing professional career.", "Will Smith, Jaden Smith", "ThePursuitofHappyness.jpg","https://youtu.be/DMOBlEcRuw8?si=m6aW7BfGYGrZTCbO"),
+                CreateMovie("The Green Mile", "1999", "The lives of guards on Death Row are affected by one of their charges: a black man accused of child murder and rape, yet who has a mysterious gift.", "Tom Hanks, Michael Clarke Duncan", "TheGreenMile.jpg","https://youtu.be/Ki4haFrqSrw?si=cVbQtkhWO1VL1mYr"),
+                CreateMovie("Wonder", "2017", "Based on the New York Times bestseller, this movie tells the incredibly inspiring and heartwarming story of August Pullman.", "Julia Roberts, Jacob Tremblay", "Wonder.jpg","https://youtu.be/ngiK1gQKgK8?si=dP43g5mIjPvDge0b"),
+                CreateMovie("Dead Poets Society", "1989", "An English teacher inspires his students to look at poetry with a different perspective of authentic knowledge and extrasolar life.", "Robin Williams, Robert Sean\r\nLeonard", "DeadPoetsSociety.jpg","https://youtu.be/s_jsDreXFZU?si=K430mwNz0YYY-eEe"),
+                CreateMovie("Good Will Hunting", "1997", "Will Hunting, a janitor at M.I.T., has a gift for mathematics, but needs help from a psychologist to find direction in his life.", "Robin Williams, Matt Damon", "GoodWillHunting.jpg","https://youtu.be/ReIJ1lbL-Q8?si=yssBNVm-3woyYzcA")
             };
         }
 
@@ -498,11 +625,11 @@ namespace Movie_Management_System
         {
             return new List<Movie>
             {
-                CreateMovie("Inside Out", "2015", "After young Riley is uprooted from her Midwest life and moved to San Francisco, her emotions conflict on how best to navigate a new city, house, and school.", "Amy Poehler, Bill Hader", "InsideOut.jpg"),
-                CreateMovie("Finding Nemo", "2003", "After his son is captured in the Great Barrier Reef and taken to Sydney, a timid clownfish sets out on a journey to bring him home.", "Albert Brooks, Ellen DeGeneres", "FindingNemo.jpg"),
-                CreateMovie("Ratatouille", "2007", "A rat who can cook makes an unusual alliance with a young kitchen worker at a famous restaurant in Paris.", "Patton Oswalt, lan Holm", "Ratatouille.jpg"),
-                CreateMovie("Zootopia", "2016", "In a city of anthropomorphic animals, a rookie bunny cop and a cynical con artist fox must work together to uncover a conspiracy.", "Ginnifer Goodwin, Jason Bateman", "Zootopia.jpg"),
-                CreateMovie("Moana", "2016", "In Ancient Polynesia, a young woman sets out on a daring mission to save her people with the help of a demigod.", "Auli'i Cravalho, Dwayne Johnson", "Moana.jpg")
+                CreateMovie("Inside Out", "2015", "After young Riley is uprooted from her Midwest life and moved to San Francisco, her emotions conflict on how best to navigate a new city, house, and school.", "Amy Poehler, Bill Hader", "InsideOut.jpg","https://youtu.be/yRUAzGQ3nSY?si=07fPEPOVfpQfhdyy"),
+                CreateMovie("Finding Nemo", "2003", "After his son is captured in the Great Barrier Reef and taken to Sydney, a timid clownfish sets out on a journey to bring him home.", "Albert Brooks, Ellen DeGeneres", "FindingNemo.jpg","https://youtu.be/9oQ628Seb9w?si=ClgJ73fmrhsRQC42"),
+                CreateMovie("Ratatouille", "2007", "A rat who can cook makes an unusual alliance with a young kitchen worker at a famous restaurant in Paris.", "Patton Oswalt, lan Holm", "Ratatouille.jpg","https://youtu.be/NgsQ8mVkN8w?si=ZWDilDF5mpPNab45"),
+                CreateMovie("Zootopia", "2016", "In a city of anthropomorphic animals, a rookie bunny cop and a cynical con artist fox must work together to uncover a conspiracy.", "Ginnifer Goodwin, Jason Bateman", "Zootopia.jpg","https://youtu.be/Y0c3nKWhlIA?si=sQlpRccOrEhFrXBF"),
+                CreateMovie("Moana", "2016", "In Ancient Polynesia, a young woman sets out on a daring mission to save her people with the help of a demigod.", "Auli'i Cravalho, Dwayne Johnson", "Moana.jpg","https://youtu.be/LKFuXETZUsI?si=_i6Gz2OyheAeLOie")
             };
         }
 
@@ -589,11 +716,11 @@ namespace Movie_Management_System
                 y = 160;
             }
 
+            // <<< معدّل: الفوتر يحسب ارتفاع الهيرو (hero.Height) وينزل تحت الأفلام بمسافة 60
             content.Height = y;
             scrollHost.AutoScrollPosition = new Point(0, 0);
-            panelFooter.Top = y + 20;
-            panelFooter.Width = scrollHost.ClientSize.Width;
-            scrollHost.AutoScrollMinSize = new Size(0, y + 20 + panelFooter.Height);
+            panelFooter.Top = hero.Height + y + 60;
+            scrollHost.AutoScrollMinSize = new Size(0, panelFooter.Bottom);
             CenterContent();
             scrollHost.ResumeLayout();
         }
@@ -792,53 +919,95 @@ namespace Movie_Management_System
             ShowAll();
         }
 
+        // =====================================================
+        //  <<< معدّل: الفوتر الجديد (أعمدة بالسنتر بنفس عرض الأفلام)
+        // =====================================================
+        private Label FooterLabel(string text, float size, Color color, bool bold, bool link)
+        {
+            Label l = new Label();
+            l.Text = text;
+            l.AutoSize = true;
+            l.ForeColor = color;
+            l.BackColor = Color.Transparent;
+            l.Font = new Font("Segoe UI", size, bold ? FontStyle.Bold : FontStyle.Regular);
+            if (link)
+            {
+                l.Cursor = Cursors.Hand;
+                l.MouseEnter += (s, e) => l.ForeColor = Color.White;
+                l.MouseLeave += (s, e) => l.ForeColor = color;
+            }
+            return l;
+        }
+
         private void MakeFooter()
         {
             panelFooter = new Panel();
-            panelFooter.Height = 70;
+            panelFooter.Height = 240;
             panelFooter.BackColor = Color.FromArgb(6, 14, 34);
+            panelFooter.Paint += (s, e) =>
+            {
+                using (Pen p = new Pen(Accent, 2))
+                    e.Graphics.DrawLine(p, 0, 0, panelFooter.Width, 0);   // خط علوي
+            };
 
-            lblAbout = new Label();
-            lblAbout.Text = "About Us";
-            lblAbout.ForeColor = Color.FromArgb(0, 200, 240);
-            lblAbout.Font = new Font("Segoe UI", 11);
-            lblAbout.AutoSize = true;
-            lblAbout.Cursor = Cursors.Hand;
-            lblAbout.Location = new Point(300, 12);
+            Color gray = Color.FromArgb(140, 160, 190);
+
+            lblBrand = FooterLabel("Movie Management System", 16F, Accent, true, false);
+            lblBrandDesc = FooterLabel("Browse movies, read their stories and cast, watch trailers, and build your own watchlist.", 10F, gray, false, false);
+            lblBrandDesc.MaximumSize = new Size(300, 0);
+
+            lblLinksTitle = FooterLabel("Quick Links", 12F, Color.White, true, false);
+            lblAbout = FooterLabel("About Us", 10.5F, Accent, false, true);
+            lblContact = FooterLabel("Contact Us", 10.5F, Accent, false, true);
+            lblPrivacy = FooterLabel("Privacy Policy", 10.5F, Accent, false, true);
             lblAbout.Click += lblAbout_Click;
-
-            lblContact = new Label();
-            lblContact.Text = "Contact Us";
-            lblContact.ForeColor = Color.FromArgb(0, 200, 240);
-            lblContact.Font = new Font("Segoe UI", 11);
-            lblContact.AutoSize = true;
-            lblContact.Cursor = Cursors.Hand;
-            lblContact.Location = new Point(420, 12);
             lblContact.Click += lblContact_Click;
-
-            lblPrivacy = new Label();
-            lblPrivacy.Text = "Privacy Policy";
-            lblPrivacy.ForeColor = Color.FromArgb(0, 200, 240);
-            lblPrivacy.Font = new Font("Segoe UI", 11);
-            lblPrivacy.AutoSize = true;
-            lblPrivacy.Cursor = Cursors.Hand;
-            lblPrivacy.Location = new Point(550, 12);
             lblPrivacy.Click += lblPrivacy_Click;
 
-            lblCopy = new Label();
-            lblCopy.Text = "© 2026 Movie Management System";
-            lblCopy.ForeColor = Color.Gray;
-            lblCopy.Font = new Font("Segoe UI", 9);
-            lblCopy.AutoSize = true;
-            lblCopy.Location = new Point(300, 42);
+            lblContactTitle = FooterLabel("Get in Touch", 12F, Color.White, true, false);
+            lblMail = FooterLabel("lmmovieapp@gmail.com", 10.5F, gray, false, false);
 
-            panelFooter.Controls.Add(lblAbout);
-            panelFooter.Controls.Add(lblContact);
-            panelFooter.Controls.Add(lblPrivacy);
-            panelFooter.Controls.Add(lblCopy);
+            footerDivider = new Panel();
+            footerDivider.BackColor = Color.FromArgb(25, 55, 100);
+            footerDivider.Height = 1;
+
+            lblCopy = FooterLabel("© 2026 Movie Management System. All rights reserved.", 9F, gray, false, false);
+
+            panelFooter.Controls.AddRange(new Control[] {
+                lblBrand, lblBrandDesc, lblLinksTitle, lblAbout, lblContact, lblPrivacy,
+                lblContactTitle, lblMail, footerDivider, lblCopy });
 
             panelFooter.Left = 0;
             scrollHost.Controls.Add(panelFooter);
+            panelFooter.BringToFront();      // أهم سطر: يطلع فوق الأفلام مو خلفها
+        }
+
+        // يوزع عناصر الفوتر بالنص بنفس عرض الأفلام
+        private void LayoutFooter()
+        {
+            if (panelFooter == null || lblCopy == null) return;
+
+            panelFooter.Width = scrollHost.ClientSize.Width;
+
+            int left = (panelFooter.Width - content.Width) / 2;
+            if (left < 10) left = 10;
+            int colW = content.Width / 3;
+
+            lblBrand.Location = new Point(left, 35);
+            lblBrandDesc.Location = new Point(left, 75);
+
+            int c2 = left + colW + 40;
+            lblLinksTitle.Location = new Point(c2, 35);
+            lblAbout.Location = new Point(c2, 75);
+            lblContact.Location = new Point(c2, 105);
+            lblPrivacy.Location = new Point(c2, 135);
+
+            int c3 = left + colW * 2 + 40;
+            lblContactTitle.Location = new Point(c3, 35);
+            lblMail.Location = new Point(c3, 75);
+
+            footerDivider.SetBounds(left, 185, content.Width, 1);
+            lblCopy.Location = new Point(left + (content.Width - lblCopy.Width) / 2, 202);
         }
 
         private void lblAbout_Click(object sender, EventArgs e)

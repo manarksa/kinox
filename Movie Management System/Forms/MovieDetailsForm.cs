@@ -98,6 +98,11 @@ namespace Movie_Management_System
                 UseShellExecute = true
             });
         }
+
+        private void MovieDetailsForm_Load(object sender, EventArgs e)
+        {
+
+        }
     }
     }
     
