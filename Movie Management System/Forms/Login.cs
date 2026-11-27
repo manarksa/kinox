@@ -38,8 +38,7 @@ namespace Movie_Management_System
         private void button1_Click(object sender, EventArgs e)
         {
 
-            string conStr = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=""C:\Users\Nada\OneDrive\Desktop\MovieApp\Movie Management System\Movie Management System\MovieDB.mdf"";Integrated Security=True;Connect Timeout=30";
-
+            string conStr = Db.ConStr;
             using (SqlConnection con = new SqlConnection(conStr))
             {
                 con.Open();

@@ -595,7 +595,7 @@ namespace Movie_Management_System
         {
             allSections.Clear();
 
-            string conStr = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=""C:\Users\Nada\OneDrive\Desktop\MovieApp\Movie Management System\Movie Management System\MovieDB.mdf"";Integrated Security=True;Connect Timeout=30";
+            string conStr = Db.ConStr;
 
             Dictionary<string, List<Movie>> byCat = new Dictionary<string, List<Movie>>();
             List<string> order = new List<string>();

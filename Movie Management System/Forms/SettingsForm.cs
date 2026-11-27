@@ -11,8 +11,7 @@ namespace Movie_Management_System.Forms
     {
         private TextBox txtOld, txtNew, txtConfirm;
 
-        private const string ConStr = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=""C:\Users\Nada\OneDrive\Desktop\MovieApp\Movie Management System\Movie Management System\MovieDB.mdf"";Integrated Security=True;Connect Timeout=30";
-
+        private static string ConStr {get {return Db.ConStr;} }
         // يرجع true لو اليوزر حذف حسابه (Form1 يستخدمها عشان يرجع لصفحة Login)
         public bool AccountDeleted = false;
 

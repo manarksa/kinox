@@ -38,8 +38,8 @@ namespace Movie_Management_System
                 return;
             }
 
-            string conStr = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=""C:\Users\Nada\OneDrive\Desktop\MovieApp\Movie Management System\Movie Management System\MovieDB.mdf"";Integrated Security=True;Connect Timeout=30";
-            using (SqlConnection con = new SqlConnection(conStr))
+            string conStr = Db.ConStr;
+                using (SqlConnection con = new SqlConnection(conStr))
             {
                 con.Open();
                 SqlCommand check = new SqlCommand("SELECT COUNT(*) FROM Users WHERE Email=@e", con);

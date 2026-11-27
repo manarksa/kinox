@@ -15,8 +15,7 @@ namespace Movie_Management_System
 {
     public partial class MovieDetailsForm : Form
     {
-        private const string ConStr = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=""C:\Users\Nada\OneDrive\Desktop\MovieApp\Movie Management System\Movie Management System\MovieDB.mdf"";Integrated Security=True;Connect Timeout=30";
-
+        private static string ConStr { get { return Db.ConStr; } }
         private Movie movie;
 
         public MovieDetailsForm(Movie m)
