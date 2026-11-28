@@ -8,21 +8,18 @@ using System.Windows.Forms;
 
 namespace Movie_Management_System
 {
-  
+
+    using System;
         public static class Db
         {
-            static Db()
-            {
-                AppDomain.CurrentDomain.SetData("DataDirectory", Application.StartupPath);
-            }
-
             public static string ConStr
             {
                 get
                 {
-                    return @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\MovieDB.mdf;Integrated Security=True;Connect Timeout=30";
+                    return "Server=MovieDB.mssql.somee.com;Database=MovieDB;User Id=movie_SQLLogin_1;Password=efnyqamwfy;TrustServerCertificate=True;";
                 }
             }
         }
-        }
+    }
+
 

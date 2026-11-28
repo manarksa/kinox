@@ -104,6 +104,7 @@
             this.textPassword.Name = "textPassword";
             this.textPassword.Size = new System.Drawing.Size(404, 24);
             this.textPassword.TabIndex = 6;
+            this.textPassword.UseSystemPasswordChar = true;
             // 
             // textConfirm
             // 
@@ -111,6 +112,7 @@
             this.textConfirm.Name = "textConfirm";
             this.textConfirm.Size = new System.Drawing.Size(404, 24);
             this.textConfirm.TabIndex = 7;
+            this.textConfirm.UseSystemPasswordChar = true;
             // 
             // btnSignUp
             // 

@@ -136,11 +136,8 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="MovieDB.mdf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <Content Include="MovieDB.mdf" />
     <Content Include="MovieDB_log.ldf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <DependentUpon>MovieDB.mdf</DependentUpon>
     </Content>
     <Content Include="Posters\darkknight.jpg" />
